@@ -1,0 +1,21 @@
+{
+    "name": "经典铃声馆",
+    "short_name": "铃声馆",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#F5F7FA",
+    "theme_color": "#667eea",
+    "description": "点击品牌卡片，重温经典手机铃声",
+    "icons": [
+        {
+            "src": "img/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "img/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
