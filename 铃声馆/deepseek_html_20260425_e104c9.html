@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>经典铃声馆</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <style>
+        /* ========== 全局变量与基础样式（可自定义） ========== */
+        :root {
+            --bg: #F5F7FA;
+            --card-bg: #FFFFFF;
+            --text: #333;
+            --sub-text: #777;
+            --active-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+            --active-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+            --card-radius: 16px;
+            --gap: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 16px 0;
+            overflow-y: auto;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 480px;
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding-bottom: 32px;
+        }
+
+        /* 头部标题 */
+        .header {
+            text-align: center;
+            margin-top: 16px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            color: var(--sub-text);
+            margin-top: 4px;
+        }
+
+        /* PWA 安装提示条（可选关闭） */
+        .install-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background: #667eea;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        .install-banner .close-banner {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            margin-left: 12px;
+            cursor: pointer;
+        }
+
+        /* 卡片网格 */
+        .brand-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--gap);
+        }
+
+        /* 每个卡片 */
+        .brand-card {
+            background: var(--card-bg);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            padding: 16px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+            min-height: 130px;
+        }
+        /* 点击瞬间反馈 */
+        .brand-card:active {
+            background: rgba(0,0,0,0.03);
+        }
+        /* 图片容器（带均衡器指示器的定位父级） */
+        .logo-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .brand-logo {
+            width: 70%;
+            height: auto;
+            object-fit: contain;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+        /* 动态均衡器（默认隐藏） */
+        .eq-indicator {
+            position: absolute;
+            top: -4px;
+            right: 10%;
+            display: none;
+            align-items: flex-end;
+            gap: 2px;
+            height: 20px;
+        }
+        .eq-indicator .bar {
+            width: 3px;
+            background: white;
+            border-radius: 2px;
+            animation: eq 0.8s infinite ease-in-out alternate;
+        }
+        .eq-indicator .bar:nth-child(1) { height: 10px; animation-delay: 0s; }
+        .eq-indicator .bar:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+        .eq-indicator .bar:nth-child(3) { height: 8px; animation-delay: 0.3s; }
+
+        @keyframes eq {
+            to { transform: scaleY(0.4); }
+        }
+
+        .brand-name {
+            font-size: 14px;
+            color: var(--text);
+            font-weight: 500;
+            transition: color 0.3s;
+            text-align: center;
+        }
+
+        /* 播放状态 */
+        .brand-card.playing {
+            background: var(--active-gradient);
+            box-shadow: var(--active-shadow);
+        }
+        .brand-card.playing .brand-logo {
+            filter: brightness(1.2);
+            animation: gentlePulse 1.2s ease-in-out infinite;
+        }
+        @keyframes gentlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .brand-card.playing .brand-name {
+            color: white;
+        }
+        .brand-card.playing .eq-indicator {
+            display: flex;
+        }
+
+        /* 加载失败文字提示 */
+        .error-hint {
+            font-size: 11px;
+            color: #ff6b6b;
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .error-hint.show {
+            opacity: 1;
+        }
+
+        /* 响应式：平板或横屏≥600px 用4列 */
+        @media (min-width: 600px) {
+            .brand-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        /* 大平板或桌面≥900px 用5列 */
+        @media (min-width: 900px) {
+            .brand-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>经典铃声馆</h1>
+            <p class="subtitle">轻点卡片，重温经典</p>
+        </div>
+
+        <!-- PWA 安装横幅 -->
+        <div class="install-banner" id="installBanner">
+            <span>📲 点击此处添加到桌面，获得 App 体验</span>
+            <button class="close-banner" id="closeBanner">✕</button>
+        </div>
+
+        <!-- 品牌卡片将动态插入这里 -->
+        <div class="brand-grid" id="brandGrid"></div>
+    </div>
+
+    <script>
+        (function() {
+            // ========== 自定义品牌列表（可随意增删改） ==========
+            const brands = [
+                { id: 'xiaomi', name: '小米',   logo: 'img/xiaomi.png',  sound: 'audio/xiaomi.mp3' },
+                { id: 'huawei', name: '华为',   logo: 'img/huawei.png',  sound: 'audio/huawei.mp3' },
+                { id: 'apple',  name: '苹果',   logo: 'img/apple.png',   sound: 'audio/apple.mp3' },
+                { id: 'oppo',   name: 'OPPO',   logo: 'img/oppo.png',    sound: 'audio/oppo.mp3' },
+                { id: 'vivo',   name: 'vivo',   logo: 'img/vivo.png',    sound: 'audio/vivo.mp3' }
+            ];
+            // =====================================================
+
+            const grid = document.getElementById('brandGrid');
+            let currentAudio = null;
+            let currentCard = null;
+
+            // 动态生成卡片
+            function renderCards() {
+                grid.innerHTML = '';
+                brands.forEach(brand => {
+                    const card = document.createElement('div');
+                    card.className = 'brand-card';
+                    card.dataset.brandId = brand.id;
+
+                    card.innerHTML = `
+                        <div class="logo-wrapper">
+                            <img src="${brand.logo}" alt="${brand.name}" class="brand-logo">
+                            <div class="eq-indicator">
+                                <span class="bar"></span>
+                                <span class="bar"></span>
+                                <span class="bar"></span>
+                            </div>
+                        </div>
+                        <span class="brand-name">${brand.name}</span>
+                        <span class="error-hint">加载失败</span>
+                    `;
+
+                    card.addEventListener('click', () => handleCardClick(card, brand));
+                    grid.appendChild(card);
+                });
+            }
+
+            // 停止当前音频并清理状态
+            function stopCurrent() {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    currentAudio.currentTime = 0;
+                    currentAudio = null;
+                }
+                if (currentCard) {
+                    currentCard.classList.remove('playing');
+                    currentCard = null;
+                }
+            }
+
+            // 处理卡片点击
+            function handleCardClick(card, brand) {
+                const isPlaying = card.classList.contains('playing');
+
+                // 如果点击的是正在播放的卡片 => 暂停
+                if (isPlaying) {
+                    stopCurrent();
+                    return;
+                }
+
+                // 否则先停止旧的，播放新的
+                stopCurrent();
+
+                // 创建音频对象
+                const audio = new Audio(brand.sound);
+                audio.preload = 'auto';
+
+                // 加载错误处理
+                audio.addEventListener('error', () => {
+                    showErrorHint(card);
+                    stopCurrent(); // 移除可能的播放状态
+                });
+
+                // 播放结束自动恢复
+                audio.addEventListener('ended', () => {
+                    card.classList.remove('playing');
+                    if (currentAudio === audio) currentAudio = null;
+                    if (currentCard === card) currentCard = null;
+                });
+
+                // 播放
+                audio.play().then(() => {
+                    card.classList.add('playing');
+                    currentAudio = audio;
+                    currentCard = card;
+                    // 隐藏可能之前的错误提示
+                    hideErrorHint(card);
+                }).catch(err => {
+                    console.warn('播放失败:', err);
+                    // 可能是用户未交互或格式不支持
+                    showErrorHint(card);
+                });
+            }
+
+            // 显示加载失败提示（3秒后消失）
+            function showErrorHint(card) {
+                const hint = card.querySelector('.error-hint');
+                if (hint) {
+                    hint.classList.add('show');
+                    clearTimeout(hint._timeout);
+                    hint._timeout = setTimeout(() => {
+                        hint.classList.remove('show');
+                    }, 3000);
+                }
+            }
+            function hideErrorHint(card) {
+                const hint = card.querySelector('.error-hint');
+                if (hint) {
+                    hint.classList.remove('show');
+                    clearTimeout(hint._timeout);
+                }
+            }
+
+            // ========== PWA 安装逻辑 ==========
+            let deferredPrompt;
+            const installBanner = document.getElementById('installBanner');
+            const closeBannerBtn = document.getElementById('closeBanner');
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                // 显示安装横幅
+                installBanner.style.display = 'flex';
+            });
+
+            // 点击横幅触发安装
+            installBanner.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('安装结果:', outcome);
+                    deferredPrompt = null;
+                    installBanner.style.display = 'none';
+                }
+            });
+
+            // 关闭横幅
+            closeBannerBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                installBanner.style.display = 'none';
+            });
+
+            // 如果已安装或不可用，隐藏横幅
+            window.addEventListener('appinstalled', () => {
+                installBanner.style.display = 'none';
+            });
+            // 如果一开始就不支持，CSS 默认隐藏
+
+            // 注册 Service Worker（注意：本地打开文件无效，仅服务器或 localhost 可用）
+            if ('serviceWorker' in navigator && location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW 注册成功', reg.scope))
+                    .catch(err => console.warn('SW 注册失败（可能是本地文件打开）:', err));
+            }
+
+            // 启动！
+            renderCards();
+        })();
+    </script>
+</body>
+</html>
