@@ -2,22 +2,28 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>经典铃声馆</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>品牌铃声馆</title>
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#667eea">
+    <meta name="theme-color" content="#0B1220">
+    <meta name="description" content="点击手机品牌卡片，试听39个品牌铃声">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="品牌铃声馆">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <style>
-        /* ========== 全局变量与基础样式（可自定义） ========== */
         :root {
             --bg: #F5F7FA;
             --card-bg: #FFFFFF;
-            --text: #333;
-            --sub-text: #777;
+            --text: #1F2937;
+            --sub-text: #6B7280;
+            --border: rgba(15, 23, 42, 0.08);
+            --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            --active-shadow: 0 14px 32px rgba(15, 23, 42, 0.18);
+            --card-radius: 22px;
+            --gap: 14px;
+            --brand-color: #667eea;
             --active-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --shadow: 0 2px 8px rgba(0,0,0,0.08);
-            --active-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-            --card-radius: 16px;
-            --gap: 16px;
         }
 
         * {
@@ -26,244 +32,401 @@
             box-sizing: border-box;
         }
 
-        body {
+        html {
             background: var(--bg);
+        }
+
+        body {
+            min-height: 100vh;
+            min-height: 100dvh;
+            background:
+                radial-gradient(circle at 20% 0%, rgba(102,126,234,0.12), transparent 28%),
+                radial-gradient(circle at 90% 10%, rgba(245,158,11,0.10), transparent 24%),
+                var(--bg);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
             display: flex;
             justify-content: center;
-            min-height: 100vh;
-            padding: 16px 0;
+            padding: max(18px, env(safe-area-inset-top)) 0 max(28px, env(safe-area-inset-bottom));
             overflow-y: auto;
             -webkit-tap-highlight-color: transparent;
+            color: var(--text);
         }
 
         .app-container {
             width: 100%;
-            max-width: 480px;
+            max-width: 560px;
             padding: 0 16px;
             display: flex;
             flex-direction: column;
-            gap: 24px;
-            padding-bottom: 32px;
+            gap: 18px;
         }
 
-        /* 头部标题 */
         .header {
             text-align: center;
-            margin-top: 16px;
+            margin-top: 8px;
         }
+
         .header h1 {
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--text);
-            letter-spacing: 1px;
+            font-size: 30px;
+            line-height: 1.15;
+            font-weight: 750;
+            letter-spacing: 0.5px;
         }
+
         .header .subtitle {
             font-size: 14px;
             color: var(--sub-text);
-            margin-top: 4px;
+            margin-top: 7px;
         }
 
-        /* PWA 安装提示条（可选关闭） */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .search-box {
+            flex: 1;
+            height: 42px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.86);
+            border-radius: 999px;
+            padding: 0 15px;
+            font-size: 14px;
+            color: var(--text);
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+            outline: none;
+        }
+
+        .search-box::placeholder {
+            color: #9CA3AF;
+        }
+
+        .stop-button {
+            height: 42px;
+            border: 0;
+            border-radius: 999px;
+            padding: 0 15px;
+            background: #111827;
+            color: #fff;
+            font-size: 14px;
+            box-shadow: 0 8px 18px rgba(17, 24, 39, 0.18);
+            cursor: pointer;
+        }
+
+        .stop-button:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+        }
+
         .install-banner {
             display: none;
             align-items: center;
             justify-content: space-between;
-            background: #667eea;
+            gap: 12px;
+            background: #111827;
             color: white;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 14px;
+            padding: 12px 14px;
+            border-radius: 16px;
+            font-size: 13px;
             box-shadow: var(--shadow);
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-        .install-banner .close-banner {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 18px;
-            margin-left: 12px;
             cursor: pointer;
         }
 
-        /* 卡片网格 */
+        .install-banner .close-banner {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 0;
+            background: rgba(255,255,255,0.14);
+            color: white;
+            font-size: 16px;
+            line-height: 1;
+            cursor: pointer;
+            flex: 0 0 auto;
+        }
+
         .brand-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: var(--gap);
         }
 
-        /* 每个卡片 */
         .brand-card {
-            background: var(--card-bg);
+            --brand-color: #667eea;
+            background: rgba(255,255,255,0.90);
+            border: 1px solid var(--border);
             border-radius: var(--card-radius);
             box-shadow: var(--shadow);
-            padding: 16px 8px;
+            padding: 12px 8px 11px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.15s ease;
+            transition: transform 0.16s ease, box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease;
             position: relative;
             cursor: pointer;
             user-select: none;
-            min-height: 130px;
+            min-height: 132px;
+            overflow: hidden;
         }
-        /* 点击瞬间反馈 */
+
+        .brand-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--brand-color) 16%, transparent), transparent 55%);
+            opacity: 0;
+            transition: opacity 0.25s;
+            pointer-events: none;
+        }
+
+        .brand-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+        }
+
         .brand-card:active {
-            background: rgba(0,0,0,0.03);
+            transform: scale(0.985);
         }
-        /* 图片容器（带均衡器指示器的定位父级） */
+
         .logo-wrapper {
             position: relative;
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 1;
         }
+
         .brand-logo {
-            width: 70%;
-            height: auto;
+            width: 72px;
+            height: 72px;
+            border-radius: 18px;
             object-fit: contain;
-            transition: transform 0.3s ease, filter 0.3s ease;
+            transition: transform 0.28s ease, filter 0.28s ease;
+            background: white;
         }
-        /* 动态均衡器（默认隐藏） */
+
         .eq-indicator {
             position: absolute;
-            top: -4px;
-            right: 10%;
+            top: -2px;
+            right: calc(50% - 48px);
             display: none;
             align-items: flex-end;
             gap: 2px;
             height: 20px;
+            padding: 3px 4px;
+            border-radius: 8px;
+            background: rgba(17, 24, 39, 0.62);
+            backdrop-filter: blur(8px);
         }
+
         .eq-indicator .bar {
             width: 3px;
             background: white;
             border-radius: 2px;
-            animation: eq 0.8s infinite ease-in-out alternate;
+            animation: eq 0.75s infinite ease-in-out alternate;
+            transform-origin: bottom;
         }
-        .eq-indicator .bar:nth-child(1) { height: 10px; animation-delay: 0s; }
-        .eq-indicator .bar:nth-child(2) { height: 16px; animation-delay: 0.15s; }
-        .eq-indicator .bar:nth-child(3) { height: 8px; animation-delay: 0.3s; }
+
+        .eq-indicator .bar:nth-child(1) { height: 9px; animation-delay: 0s; }
+        .eq-indicator .bar:nth-child(2) { height: 15px; animation-delay: 0.14s; }
+        .eq-indicator .bar:nth-child(3) { height: 7px; animation-delay: 0.28s; }
 
         @keyframes eq {
-            to { transform: scaleY(0.4); }
+            to { transform: scaleY(0.35); }
         }
 
         .brand-name {
             font-size: 14px;
             color: var(--text);
-            font-weight: 500;
-            transition: color 0.3s;
+            font-weight: 650;
             text-align: center;
+            z-index: 1;
+            transition: color 0.22s;
         }
 
-        /* 播放状态 */
         .brand-card.playing {
-            background: var(--active-gradient);
+            border-color: color-mix(in srgb, var(--brand-color) 50%, white);
             box-shadow: var(--active-shadow);
+            background: #fff;
         }
+
+        .brand-card.playing::before {
+            opacity: 1;
+        }
+
         .brand-card.playing .brand-logo {
-            filter: brightness(1.2);
-            animation: gentlePulse 1.2s ease-in-out infinite;
+            animation: gentlePulse 1.15s ease-in-out infinite;
+            filter: saturate(1.08) contrast(1.03);
         }
+
         @keyframes gentlePulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.055); }
         }
+
         .brand-card.playing .brand-name {
-            color: white;
+            color: var(--brand-color);
         }
+
         .brand-card.playing .eq-indicator {
             display: flex;
         }
 
-        /* 加载失败文字提示 */
         .error-hint {
             font-size: 11px;
-            color: #ff6b6b;
+            color: #EF4444;
             position: absolute;
-            bottom: -18px;
+            bottom: 7px;
             left: 50%;
             transform: translateX(-50%);
             white-space: nowrap;
             opacity: 0;
-            transition: opacity 0.3s;
+            transition: opacity 0.25s;
             pointer-events: none;
+            z-index: 2;
         }
+
         .error-hint.show {
             opacity: 1;
         }
 
-        /* 响应式：平板或横屏≥600px 用4列 */
-        @media (min-width: 600px) {
+        .empty-state {
+            display: none;
+            text-align: center;
+            color: var(--sub-text);
+            font-size: 14px;
+            padding: 30px 0;
+        }
+
+        @media (min-width: 520px) {
             .brand-grid {
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(4, minmax(0, 1fr));
             }
         }
-        /* 大平板或桌面≥900px 用5列 */
-        @media (min-width: 900px) {
+
+        @media (min-width: 760px) {
             .brand-grid {
-                grid-template-columns: repeat(5, 1fr);
+                grid-template-columns: repeat(5, minmax(0, 1fr));
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- 头部 -->
-        <div class="header">
-            <h1>经典铃声馆</h1>
-            <p class="subtitle">轻点卡片，重温经典</p>
-        </div>
+    <main class="app-container">
+        <header class="header">
+            <h1>品牌铃声馆</h1>
+            <p class="subtitle">轻点品牌卡片，试听39个品牌铃声</p>
+        </header>
 
-        <!-- PWA 安装横幅 -->
-        <div class="install-banner" id="installBanner">
-            <span>📲 点击此处添加到桌面，获得 App 体验</span>
-            <button class="close-banner" id="closeBanner">✕</button>
-        </div>
+        <section class="install-banner" id="installBanner" aria-label="安装应用提示">
+            <span>📲 添加到桌面，获得接近 App 的使用体验</span>
+            <button class="close-banner" id="closeBanner" type="button" aria-label="关闭安装提示">×</button>
+        </section>
 
-        <!-- 品牌卡片将动态插入这里 -->
-        <div class="brand-grid" id="brandGrid"></div>
-    </div>
+        <section class="toolbar" aria-label="操作栏">
+            <input class="search-box" id="searchInput" type="search" placeholder="搜索品牌，例如 motorola / 小米 / 三星" autocomplete="off">
+            <button class="stop-button" id="stopButton" type="button" disabled>停止</button>
+        </section>
+
+        <section class="brand-grid" id="brandGrid" aria-label="品牌铃声列表"></section>
+        <p class="empty-state" id="emptyState">没有找到匹配的品牌</p>
+    </main>
 
     <script>
         (function() {
-            // ========== 自定义品牌列表（可随意增删改） ==========
             const brands = [
-                { id: 'xiaomi', name: '小米',   logo: 'img/xiaomi.png',  sound: 'audio/xiaomi.mp3' },
-                { id: 'huawei', name: '华为',   logo: 'img/huawei.png',  sound: 'audio/huawei.mp3' },
-                { id: 'apple',  name: '苹果',   logo: 'img/apple.png',   sound: 'audio/apple.mp3' },
-                { id: 'oppo',   name: 'OPPO',   logo: 'img/oppo.png',    sound: 'audio/oppo.mp3' },
-                { id: 'vivo',   name: 'vivo',   logo: 'img/vivo.png',    sound: 'audio/vivo.mp3' }
+                { id: '01_motorola', name: 'Motorola', zh: '摩托罗拉', logo: 'img/01_motorola.png', sound: 'audio/01_motorola.mp3', color: '#2563EB' },
+                { id: '02_lg', name: 'LG', zh: '乐金', logo: 'img/02_lg.png', sound: 'audio/02_lg.mp3', color: '#D81B60' },
+                { id: '03_oppo', name: 'OPPO', zh: '欧珀', logo: 'img/03_oppo.png', sound: 'audio/03_oppo.mp3', color: '#16A34A' },
+                { id: '04_google_pixel', name: 'Google Pixel', zh: '谷歌Pixel', logo: 'img/04_google_pixel.png', sound: 'audio/04_google_pixel.mp3', color: '#4285F4' },
+                { id: '05_xperia', name: 'Xperia', zh: '索尼Xperia', logo: 'img/05_xperia.png', sound: 'audio/05_xperia.mp3', color: '#111827' },
+                { id: '06_huawei', name: 'Huawei', zh: '华为', logo: 'img/06_huawei.png', sound: 'audio/06_huawei.mp3', color: '#DC2626' },
+                { id: '07_blackberry', name: 'BlackBerry', zh: '黑莓', logo: 'img/07_blackberry.png', sound: 'audio/07_blackberry.mp3', color: '#111827' },
+                { id: '08_alcatel', name: 'Alcatel', zh: '阿尔卡特', logo: 'img/08_alcatel.png', sound: 'audio/08_alcatel.mp3', color: '#2563EB' },
+                { id: '09_xiaomi', name: 'Xiaomi', zh: '小米', logo: 'img/09_xiaomi.png', sound: 'audio/09_xiaomi.mp3', color: '#F97316' },
+                { id: '10_honor', name: 'HONOR', zh: '荣耀', logo: 'img/10_honor.png', sound: 'audio/10_honor.mp3', color: '#B45309' },
+                { id: '11_oneplus', name: 'OnePlus', zh: '一加', logo: 'img/11_oneplus.png', sound: 'audio/11_oneplus.mp3', color: '#EF4444' },
+                { id: '12_htc', name: 'HTC', zh: '宏达电', logo: 'img/12_htc.png', sound: 'audio/12_htc.mp3', color: '#65B32E' },
+                { id: '13_cubot', name: 'CUBOT', zh: 'CUBOT', logo: 'img/13_cubot.png', sound: 'audio/13_cubot.mp3', color: '#1D4ED8' },
+                { id: '14_asus', name: 'ASUS', zh: '华硕', logo: 'img/14_asus.png', sound: 'audio/14_asus.mp3', color: '#1D4ED8' },
+                { id: '15_aquos', name: 'AQUOS', zh: '夏普AQUOS', logo: 'img/15_aquos.png', sound: 'audio/15_aquos.mp3', color: '#1D4ED8' },
+                { id: '16_lenovo', name: 'Lenovo', zh: '联想', logo: 'img/16_lenovo.png', sound: 'audio/16_lenovo.mp3', color: '#DC2626' },
+                { id: '17_oukitel', name: 'OUKITEL', zh: 'OUKITEL', logo: 'img/17_oukitel.png', sound: 'audio/17_oukitel.mp3', color: '#F97316' },
+                { id: '18_wiko', name: 'Wiko', zh: 'Wiko', logo: 'img/18_wiko.png', sound: 'audio/18_wiko.mp3', color: '#14B8A6' },
+                { id: '19_blackview', name: 'Blackview', zh: 'Blackview', logo: 'img/19_blackview.png', sound: 'audio/19_blackview.mp3', color: '#D97706' },
+                { id: '20_realme', name: 'realme', zh: '真我', logo: 'img/20_realme.png', sound: 'audio/20_realme.mp3', color: '#FACC15' },
+                { id: '21_zte', name: 'ZTE', zh: '中兴', logo: 'img/21_zte.png', sound: 'audio/21_zte.mp3', color: '#0284C7' },
+                { id: '22_techno', name: 'TECNO', zh: '传音TECNO', logo: 'img/22_techno.png', sound: 'audio/22_techno.mp3', color: '#2563EB' },
+                { id: '23_vivo', name: 'vivo', zh: '维沃', logo: 'img/23_vivo.png', sound: 'audio/23_vivo.mp3', color: '#2563EB' },
+                { id: '24_coolpad', name: 'Coolpad', zh: '酷派', logo: 'img/24_coolpad.png', sound: 'audio/24_coolpad.mp3', color: '#2563EB' },
+                { id: '25_cromax', name: 'Cromax', zh: 'Cromax', logo: 'img/25_cromax.png', sound: 'audio/25_cromax.mp3', color: '#EF4444' },
+                { id: '26_lava', name: 'LAVA', zh: 'LAVA', logo: 'img/26_lava.png', sound: 'audio/26_lava.mp3', color: '#E11D48' },
+                { id: '27_panasonic', name: 'Panasonic', zh: '松下', logo: 'img/27_panasonic.png', sound: 'audio/27_panasonic.mp3', color: '#1D4ED8' },
+                { id: '28_intex', name: 'INTEX', zh: 'INTEX', logo: 'img/28_intex.png', sound: 'audio/28_intex.mp3', color: '#EF4444' },
+                { id: '29_tcl', name: 'TCL', zh: 'TCL', logo: 'img/29_tcl.png', sound: 'audio/29_tcl.mp3', color: '#DC2626' },
+                { id: '30_gionee', name: 'GIONEE', zh: '金立', logo: 'img/30_gionee.png', sound: 'audio/30_gionee.mp3', color: '#F97316' },
+                { id: '31_infinix', name: 'Infinix', zh: 'Infinix', logo: 'img/31_infinix.png', sound: 'audio/31_infinix.mp3', color: '#84CC16' },
+                { id: '32_nokia', name: 'Nokia', zh: '诺基亚', logo: 'img/32_nokia.png', sound: 'audio/32_nokia.mp3', color: '#0EA5E9' },
+                { id: '33_fairphone', name: 'FAIRPHONE', zh: 'FAIRPHONE', logo: 'img/33_fairphone.png', sound: 'audio/33_fairphone.mp3', color: '#0EA5E9' },
+                { id: '34_ulefone', name: 'uleFone', zh: 'uleFone', logo: 'img/34_ulefone.png', sound: 'audio/34_ulefone.mp3', color: '#EAB308' },
+                { id: '35_t_mobile', name: 'T-Mobile', zh: 'T-Mobile', logo: 'img/35_t_mobile.png', sound: 'audio/35_t_mobile.mp3', color: '#E20074' },
+                { id: '36_meizu', name: 'MEIZU', zh: '魅族', logo: 'img/36_meizu.png', sound: 'audio/36_meizu.mp3', color: '#EF4444' },
+                { id: '37_itel', name: 'itel', zh: 'itel', logo: 'img/37_itel.png', sound: 'audio/37_itel.mp3', color: '#EF4444' },
+                { id: '38_samsung', name: 'Samsung', zh: '三星', logo: 'img/38_samsung.png', sound: 'audio/38_samsung.mp3', color: '#1D4ED8' },
+                { id: '39_iphone', name: 'iPhone', zh: '苹果', logo: 'img/39_iphone.png', sound: 'audio/39_iphone.mp3', color: '#111827' }
             ];
-            // =====================================================
 
             const grid = document.getElementById('brandGrid');
+            const searchInput = document.getElementById('searchInput');
+            const stopButton = document.getElementById('stopButton');
+            const emptyState = document.getElementById('emptyState');
+
             let currentAudio = null;
             let currentCard = null;
 
-            // 动态生成卡片
-            function renderCards() {
+            function escapeHtml(str) {
+                return String(str).replace(/[&<>"']/g, s => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[s]));
+            }
+
+            function renderCards(list = brands) {
                 grid.innerHTML = '';
-                brands.forEach(brand => {
-                    const card = document.createElement('div');
+                emptyState.style.display = list.length ? 'none' : 'block';
+
+                list.forEach(brand => {
+                    const card = document.createElement('button');
+                    card.type = 'button';
                     card.className = 'brand-card';
                     card.dataset.brandId = brand.id;
-
+                    card.style.setProperty('--brand-color', brand.color);
+                    card.setAttribute('aria-label', `播放 ${brand.name} 铃声`);
                     card.innerHTML = `
                         <div class="logo-wrapper">
-                            <img src="${brand.logo}" alt="${brand.name}" class="brand-logo">
-                            <div class="eq-indicator">
+                            <img src="${escapeHtml(brand.logo)}" alt="${escapeHtml(brand.name)}" class="brand-logo" loading="lazy" decoding="async">
+                            <div class="eq-indicator" aria-hidden="true">
                                 <span class="bar"></span>
                                 <span class="bar"></span>
                                 <span class="bar"></span>
                             </div>
                         </div>
-                        <span class="brand-name">${brand.name}</span>
+                        <span class="brand-name">${escapeHtml(brand.name)}</span>
                         <span class="error-hint">加载失败</span>
                     `;
 
@@ -272,7 +435,6 @@
                 });
             }
 
-            // 停止当前音频并清理状态
             function stopCurrent() {
                 if (currentAudio) {
                     currentAudio.pause();
@@ -281,74 +443,88 @@
                 }
                 if (currentCard) {
                     currentCard.classList.remove('playing');
+                    currentCard.setAttribute('aria-label', currentCard.getAttribute('aria-label').replace('停止', '播放'));
                     currentCard = null;
                 }
+                stopButton.disabled = true;
             }
 
-            // 处理卡片点击
             function handleCardClick(card, brand) {
-                const isPlaying = card.classList.contains('playing');
-
-                // 如果点击的是正在播放的卡片 => 暂停
-                if (isPlaying) {
+                if (card.classList.contains('playing')) {
                     stopCurrent();
                     return;
                 }
 
-                // 否则先停止旧的，播放新的
                 stopCurrent();
 
-                // 创建音频对象
                 const audio = new Audio(brand.sound);
                 audio.preload = 'auto';
+                audio.volume = 0.9;
 
-                // 加载错误处理
                 audio.addEventListener('error', () => {
-                    showErrorHint(card);
-                    stopCurrent(); // 移除可能的播放状态
+                    showErrorHint(card, '加载失败');
+                    stopCurrent();
                 });
 
-                // 播放结束自动恢复
                 audio.addEventListener('ended', () => {
-                    card.classList.remove('playing');
-                    if (currentAudio === audio) currentAudio = null;
-                    if (currentCard === card) currentCard = null;
+                    if (currentAudio === audio) {
+                        stopCurrent();
+                    } else {
+                        card.classList.remove('playing');
+                    }
                 });
 
-                // 播放
                 audio.play().then(() => {
                     card.classList.add('playing');
+                    card.setAttribute('aria-label', `停止 ${brand.name} 铃声`);
                     currentAudio = audio;
                     currentCard = card;
-                    // 隐藏可能之前的错误提示
+                    stopButton.disabled = false;
                     hideErrorHint(card);
                 }).catch(err => {
                     console.warn('播放失败:', err);
-                    // 可能是用户未交互或格式不支持
-                    showErrorHint(card);
+                    showErrorHint(card, '播放失败');
                 });
             }
 
-            // 显示加载失败提示（3秒后消失）
-            function showErrorHint(card) {
+            function showErrorHint(card, text) {
                 const hint = card.querySelector('.error-hint');
-                if (hint) {
-                    hint.classList.add('show');
-                    clearTimeout(hint._timeout);
-                    hint._timeout = setTimeout(() => {
-                        hint.classList.remove('show');
-                    }, 3000);
-                }
-            }
-            function hideErrorHint(card) {
-                const hint = card.querySelector('.error-hint');
-                if (hint) {
-                    hint.classList.remove('show');
-                    clearTimeout(hint._timeout);
-                }
+                if (!hint) return;
+                hint.textContent = text || '加载失败';
+                hint.classList.add('show');
+                clearTimeout(hint._timeout);
+                hint._timeout = setTimeout(() => hint.classList.remove('show'), 2600);
             }
 
-            // ========== PWA 安装逻辑 ==========
+            function hideErrorHint(card) {
+                const hint = card.querySelector('.error-hint');
+                if (!hint) return;
+                hint.classList.remove('show');
+                clearTimeout(hint._timeout);
+            }
+
+            function filterBrands() {
+                const keyword = searchInput.value.trim().toLowerCase();
+                if (!keyword) {
+                    renderCards(brands);
+                    return;
+                }
+                const filtered = brands.filter(item => {
+                    return item.id.includes(keyword)
+                        || item.name.toLowerCase().includes(keyword)
+                        || item.zh.includes(keyword);
+                });
+                renderCards(filtered);
+            }
+
+            searchInput.addEventListener('input', filterBrands);
+            stopButton.addEventListener('click', stopCurrent);
+
+            window.addEventListener('pagehide', stopCurrent);
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) stopCurrent();
+            });
+
             let deferredPrompt;
             const installBanner = document.getElementById('installBanner');
             const closeBannerBtn = document.getElementById('closeBanner');
@@ -356,41 +532,37 @@
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
-                // 显示安装横幅
                 installBanner.style.display = 'flex';
             });
 
-            // 点击横幅触发安装
             installBanner.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    console.log('安装结果:', outcome);
-                    deferredPrompt = null;
-                    installBanner.style.display = 'none';
-                }
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                installBanner.style.display = 'none';
             });
 
-            // 关闭横幅
             closeBannerBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 installBanner.style.display = 'none';
             });
 
-            // 如果已安装或不可用，隐藏横幅
             window.addEventListener('appinstalled', () => {
                 installBanner.style.display = 'none';
             });
-            // 如果一开始就不支持，CSS 默认隐藏
 
-            // 注册 Service Worker（注意：本地打开文件无效，仅服务器或 localhost 可用）
-            if ('serviceWorker' in navigator && location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('SW 注册成功', reg.scope))
-                    .catch(err => console.warn('SW 注册失败（可能是本地文件打开）:', err));
+            const canUseServiceWorker = 'serviceWorker' in navigator
+                && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname));
+
+            if (canUseServiceWorker) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('sw.js')
+                        .then(reg => console.log('SW 注册成功:', reg.scope))
+                        .catch(err => console.warn('SW 注册失败:', err));
+                });
             }
 
-            // 启动！
             renderCards();
         })();
     </script>
